@@ -268,7 +268,7 @@ const App = () => {
           </div>
         </div>
 
-        {/* Main Visual Flow */}
+        {/* Main Visualization Flow */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative py-4">
           
           {/* Animated Connection 1: Frontend -> Node */}
