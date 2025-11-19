@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Database, Globe, Code, Server, Terminal, CheckCircle, Loader, Cpu, FileJson, Layers, BookOpen, Activity, Key, Hash, Box, ScrollText, Radio, ChevronRight, Send } from 'lucide-react';
 
 // 详细数据配置
@@ -150,6 +150,15 @@ const App = () => {
   const [chainValue, setChainValue] = useState(0);
   const [logs, setLogs] = useState([]);
   const [isSimulating, setIsSimulating] = useState(false);
+  
+  // 使用 ref 自动滚动日志
+  const logsEndRef = useRef(null);
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs]);
 
   // 自动切换详情页
   useEffect(() => {
@@ -274,10 +283,7 @@ const App = () => {
           {/* Animated Connection 1: Frontend -> Node */}
           <div className="hidden md:flex absolute top-1/2 left-[28%] w-[14%] -translate-y-1/2 z-0 items-center justify-center">
             <div className="w-full h-0.5 bg-slate-200 relative rounded-full overflow-visible">
-               {/* Dashed Base Line */}
                <div className="absolute inset-0 border-t-2 border-slate-300 border-dashed w-full"></div>
-               
-               {/* Moving Packet (Blue) */}
                <div 
                   className={`absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-blue-100 border-2 border-blue-500 rounded-full flex items-center justify-center shadow-sm z-10 transition-all duration-[2500ms] ease-in-out ${
                     currentStep >= 2 ? 'left-[100%] opacity-100' : 'left-0 opacity-0'
@@ -285,8 +291,6 @@ const App = () => {
                 >
                   <Key className="w-3 h-3 text-blue-600" />
                </div>
-
-               {/* Arrow Head */}
                <ChevronRight className={`absolute -right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 ${currentStep >= 2 ? 'text-blue-400' : ''}`} />
             </div>
           </div>
@@ -294,10 +298,7 @@ const App = () => {
           {/* Animated Connection 2: Node -> Chain */}
           <div className="hidden md:flex absolute top-1/2 right-[28%] w-[14%] -translate-y-1/2 z-0 items-center justify-center">
             <div className="w-full h-0.5 bg-slate-200 relative rounded-full overflow-visible">
-               {/* Dashed Base Line */}
                <div className="absolute inset-0 border-t-2 border-slate-300 border-dashed w-full"></div>
-
-               {/* Moving Packet (Purple) */}
                <div 
                   className={`absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-purple-100 border-2 border-purple-500 rounded-full flex items-center justify-center shadow-sm z-10 transition-all duration-[3000ms] ease-in-out ${
                     currentStep >= 3 ? 'left-[100%] opacity-100' : 'left-0 opacity-0'
@@ -305,8 +306,6 @@ const App = () => {
                 >
                   <Send className="w-3 h-3 text-purple-600" />
                </div>
-
-               {/* Arrow Head */}
                <ChevronRight className={`absolute -right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 ${currentStep >= 3 ? 'text-purple-400' : ''}`} />
             </div>
           </div>
@@ -383,20 +382,21 @@ const App = () => {
         </div>
 
         {/* Detail Sub-Page / Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80 transition-all duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96 transition-all duration-500">
           
           {/* Left: Detail View (The "Sub-page") */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col animate-fade-in">
-            {/* Tab Header */}
-            <div className="flex border-b border-slate-100 bg-slate-50/50 overflow-x-auto">
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden flex flex-col h-full animate-fade-in">
+            
+            {/* 1. Tab Header (固定 - 修复了 flex 布局，横向排列) */}
+            <div className="flex-none border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm overflow-x-auto flex items-center">
               {STEP_DETAILS[detailStep] && STEP_DETAILS[detailStep].tabs.map((tab, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveTab(idx)}
-                  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 ${
                     activeTab === idx 
-                    ? 'bg-white text-blue-600 border-t-2 border-blue-500 shadow-sm' 
-                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50/50' 
+                    : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                 >
                   {tab.icon}
@@ -405,29 +405,50 @@ const App = () => {
               ))}
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 p-6 relative">
-              <div className="absolute top-6 right-6 text-slate-200">
-                 {detailStep === 1 && <Globe className="w-24 h-24 opacity-10" />}
-                 {detailStep === 2 && <Server className="w-24 h-24 opacity-10" />}
-                 {detailStep === 4 && <Cpu className="w-24 h-24 opacity-10" />}
-                 {detailStep === 5 && <ScrollText className="w-24 h-24 opacity-10" />}
-              </div>
+            {/* 2. Title & Desc (固定 - 减小了 padding 以节省垂直空间) */}
+            {STEP_DETAILS[detailStep] && (
+                <div className="flex-none px-6 py-3 border-b border-slate-100 bg-white z-10 relative shadow-sm">
+                    <div className="absolute top-3 right-6 text-slate-100 pointer-events-none">
+                         {detailStep === 1 && <Globe className="w-12 h-12" />}
+                         {detailStep === 2 && <Server className="w-12 h-12" />}
+                         {detailStep === 4 && <Cpu className="w-12 h-12" />}
+                         {detailStep === 5 && <ScrollText className="w-12 h-12" />}
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2 relative z-20">
+                        {STEP_DETAILS[detailStep].title}
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-xl leading-relaxed relative z-20 line-clamp-2">
+                        {STEP_DETAILS[detailStep].desc}
+                    </p>
+                </div>
+             )}
 
+            {/* 3. Content Area (独立滚动 - 获得了更多空间) */}
+            <div className="flex-1 p-4 relative overflow-y-auto bg-slate-50/30">
               {STEP_DETAILS[detailStep] ? (
-                <div className="animate-fade-in">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">{STEP_DETAILS[detailStep].title}</h3>
-                    <p className="text-sm text-slate-500">{STEP_DETAILS[detailStep].desc}</p>
-                  </div>
+                <div className="animate-fade-in h-full">
                   
-                  <div className="bg-slate-900 rounded-lg p-4 shadow-inner overflow-x-auto">
-                    <pre className="text-xs md:text-sm font-mono text-blue-300 leading-relaxed">
-                      {typeof STEP_DETAILS[detailStep].tabs[activeTab].content === 'function' 
-                        ? STEP_DETAILS[detailStep].tabs[activeTab].content(inputValue)
-                        : STEP_DETAILS[detailStep].tabs[activeTab].content
-                      }
-                    </pre>
+                  {/* Code Window UI */}
+                  <div className="bg-slate-900 rounded-xl shadow-sm border border-slate-800 overflow-hidden flex flex-col min-h-[200px]">
+                    {/* Mac-style Header */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-800/50 border-b border-slate-700/50">
+                        <div className="flex gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Read-only</span>
+                    </div>
+                    
+                    {/* Code Content */}
+                    <div className="p-4 overflow-x-auto custom-scrollbar flex-1">
+                         <pre className="text-sm font-mono text-blue-300 leading-relaxed">
+                          {typeof STEP_DETAILS[detailStep].tabs[activeTab].content === 'function' 
+                            ? STEP_DETAILS[detailStep].tabs[activeTab].content(inputValue)
+                            : STEP_DETAILS[detailStep].tabs[activeTab].content
+                          }
+                        </pre>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -439,12 +460,12 @@ const App = () => {
           </div>
 
           {/* Right: Live Logs */}
-          <div className="lg:col-span-1 bg-slate-900 rounded-2xl p-4 text-xs font-mono text-slate-300 overflow-y-auto shadow-lg border border-slate-700 flex flex-col">
-             <div className="sticky top-0 bg-slate-900 pb-2 border-b border-slate-700 mb-2 flex items-center gap-2 text-slate-100 font-bold z-10">
+          <div className="lg:col-span-1 bg-slate-900 rounded-2xl p-4 text-xs font-mono text-slate-300 overflow-hidden shadow-lg border border-slate-700 flex flex-col h-full">
+             <div className="flex-none bg-slate-900 pb-2 border-b border-slate-700 mb-2 flex items-center gap-2 text-slate-100 font-bold z-10">
                <Terminal className="w-4 h-4" />
                <span>System Logs</span>
              </div>
-             <div className="space-y-3 flex-1">
+             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                {logs.length === 0 && <span className="text-slate-600 italic block mt-4 text-center">Ready to start simulation...</span>}
                {logs.map((log) => (
                  <div key={log.id} className="animate-fade-in-left">
@@ -460,6 +481,7 @@ const App = () => {
                    </span>
                  </div>
                ))}
+               <div ref={logsEndRef} />
              </div>
           </div>
         </div>
